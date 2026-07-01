@@ -299,17 +299,18 @@ internal sealed class FdiContext : IDisposable
             return IntPtr.Zero;
         }
 
-        var destinationPath = ResolveDestinationPath(_destinationDirectory!, nameInCabinet);
-
-        if (!_overwrite && File.Exists(destinationPath))
-        {
-            _pendingException = new IOException($"Destination file already exists: {destinationPath}");
-            return new IntPtr(-1);
-        }
-
+        string destinationPath;
         FileStream stream;
         try
         {
+            destinationPath = ResolveDestinationPath(_destinationDirectory!, nameInCabinet);
+
+            if (!_overwrite && File.Exists(destinationPath))
+            {
+                _pendingException = new IOException($"Destination file already exists: {destinationPath}");
+                return new IntPtr(-1);
+            }
+
             var destinationDir = Path.GetDirectoryName(destinationPath);
             if (!string.IsNullOrEmpty(destinationDir))
             {
@@ -320,10 +321,12 @@ internal sealed class FdiContext : IDisposable
         }
         catch (Exception ex) when (ex is ArgumentException or IOException or NotSupportedException or PathTooLongException)
         {
-            // destinationPath is derived directly from nameInCabinet, which FDI read straight out of the
-            // cabinet's CFFILE record. A path the OS/.NET itself rejects as syntactically invalid is
-            // strong evidence that record is corrupt, not a legitimate I/O failure — classify it as such
-            // rather than letting a raw ArgumentException/IOException surface as the generic base type.
+            // nameInCabinet is read straight out of the cabinet's CFFILE record. A path the OS/.NET
+            // itself rejects as syntactically invalid while resolving or opening it is strong evidence
+            // that record is corrupt, not a legitimate I/O failure — classify it as such rather than
+            // letting a raw ArgumentException/IOException surface as the generic base exception type.
+            // (CabinetException itself doesn't match this filter, so ResolveDestinationPath's own
+            // path-traversal exception still passes through unaltered.)
             throw new CabinetCorruptException(
                 $"Cabinet entry '{nameInCabinet}' resolved to an invalid destination path, indicating a corrupt cabinet: {ex.Message}",
                 ex);
