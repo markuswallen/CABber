@@ -121,7 +121,7 @@ public class CabinetExtractorTests : IDisposable
     }
 
     [Fact]
-    public void ListFiles_CorruptedCabinet_ThrowsCabinetCorruptException()
+    public void ExtractAll_CorruptedCabinet_ThrowsCabinetCorruptException()
     {
         if (!OperatingSystem.IsWindows())
         {
@@ -133,8 +133,13 @@ public class CabinetExtractorTests : IDisposable
         CabinetFixtures.BuildCorruptedCabinet(cabPath, workDir);
 
         var extractor = new CabinetExtractor(cabPath);
+        var destDir = CreateTempDirectory();
 
-        Assert.Throws<CabinetCorruptException>(() => extractor.ListFiles());
+        // BuildCorruptedCabinet flips bytes in the compressed CFDATA region. ListFiles() intentionally
+        // never decompresses CFDATA (FdiContext.OnCopyFile returns IntPtr.Zero to skip extraction when
+        // only listing — see FdiContext's class doc), so it can't detect this corruption; only a real
+        // extraction pass decompresses the data and hits the checksum failure.
+        Assert.Throws<CabinetCorruptException>(() => extractor.ExtractAll(destDir));
     }
 
     [Fact]
