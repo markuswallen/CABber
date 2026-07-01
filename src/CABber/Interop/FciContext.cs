@@ -41,8 +41,6 @@ internal sealed class FciContext : IDisposable
     private readonly FciFilePlacedDelegate _filePlacedDelegate;
 
     private Exception? _pendingException;
-    private string _currentFileName = string.Empty;
-    private long _currentFileSize;
     private long _bytesCompletedBeforeCurrentFile;
     private int _filesProcessed;
     private bool _disposed;
@@ -102,8 +100,6 @@ internal sealed class FciContext : IDisposable
     public void AddFile(string sourceFilePath, string nameInCabinet)
     {
         _pendingException = null;
-        _currentFileName = nameInCabinet;
-        _currentFileSize = new FileInfo(sourceFilePath).Length;
 
         var ok = NativeMethods.FCIAddFile(
             _handle.DangerousGetHandle(),
@@ -334,17 +330,12 @@ internal sealed class FciContext : IDisposable
         return false;
     }
 
-    private int Status(uint typeStatus, uint cb1, uint cb2, IntPtr pv)
-    {
-        if (typeStatus == FciConstants.StatusFile)
-        {
-            _filesProcessed++;
-            _bytesCompletedBeforeCurrentFile += _currentFileSize;
-            _progress?.Report(new CabinetProgress(_currentFileName, _bytesCompletedBeforeCurrentFile, _totalBytes, _filesProcessed, _totalFiles));
-        }
-
-        return 0;
-    }
+    /// <summary>
+    /// Reports incremental compression byte-progress; <c>statusFile</c> notifications are not
+    /// guaranteed one-per-file (FCI can coalesce small files into a single compressed block
+    /// before flushing), so per-file accounting happens in <see cref="FilePlaced"/> instead.
+    /// </summary>
+    private int Status(uint typeStatus, uint cb1, uint cb2, IntPtr pv) => 0;
 
     private IntPtr GetOpenInfo(string pszName, out ushort pdate, out ushort ptime, out ushort pattribs, out int err, IntPtr pv)
     {
@@ -369,7 +360,18 @@ internal sealed class FciContext : IDisposable
         }
     }
 
-    private bool FilePlaced(ref CCAB pccab, string pszFile, int cbFile, bool fContinuation, IntPtr pv) => true;
+    /// <summary>
+    /// Called exactly once per file, once FCI has fully placed it into the current cabinet —
+    /// the reliable per-file completion signal (unlike <see cref="Status"/>'s <c>statusFile</c>
+    /// notifications, which track raw compression byte-progress).
+    /// </summary>
+    private bool FilePlaced(ref CCAB pccab, string pszFile, int cbFile, bool fContinuation, IntPtr pv)
+    {
+        _filesProcessed++;
+        _bytesCompletedBeforeCurrentFile += cbFile;
+        _progress?.Report(new CabinetProgress(pszFile, _bytesCompletedBeforeCurrentFile, _totalBytes, _filesProcessed, _totalFiles));
+        return true;
+    }
 
     private static void ToDosDateTime(DateTime dateTime, out ushort date, out ushort time)
     {
