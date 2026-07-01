@@ -307,13 +307,28 @@ internal sealed class FdiContext : IDisposable
             return new IntPtr(-1);
         }
 
-        var destinationDir = Path.GetDirectoryName(destinationPath);
-        if (!string.IsNullOrEmpty(destinationDir))
+        FileStream stream;
+        try
         {
-            Directory.CreateDirectory(destinationDir!);
+            var destinationDir = Path.GetDirectoryName(destinationPath);
+            if (!string.IsNullOrEmpty(destinationDir))
+            {
+                Directory.CreateDirectory(destinationDir!);
+            }
+
+            stream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
+        }
+        catch (Exception ex) when (ex is ArgumentException or IOException or NotSupportedException or PathTooLongException)
+        {
+            // destinationPath is derived directly from nameInCabinet, which FDI read straight out of the
+            // cabinet's CFFILE record. A path the OS/.NET itself rejects as syntactically invalid is
+            // strong evidence that record is corrupt, not a legitimate I/O failure — classify it as such
+            // rather than letting a raw ArgumentException/IOException surface as the generic base type.
+            throw new CabinetCorruptException(
+                $"Cabinet entry '{nameInCabinet}' resolved to an invalid destination path, indicating a corrupt cabinet: {ex.Message}",
+                ex);
         }
 
-        var stream = new FileStream(destinationPath, FileMode.Create, FileAccess.Write, FileShare.None);
         var token = _fileHandles.Open(stream);
         _openDestinationPaths[token] = destinationPath;
         return token;
