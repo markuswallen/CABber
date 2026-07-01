@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;netstandard2.0</TargetFrameworks>
+    <RootNamespace>CABber</RootNamespace>
+    <AssemblyName>CABber</AssemblyName>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <SupportedPlatform Include="windows" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <PackageId>CABber</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Markus Wallén</Authors>
+    <Description>A .NET wrapper around the Windows cabinet (.cab) creation/extraction APIs, built on the native FCI/FDI interfaces exported by cabinet.dll.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/markuswallen/CABber</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/markuswallen/CABber</PackageProjectUrl>
+    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>CABber.Tests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+</Project>
