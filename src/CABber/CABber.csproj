@@ -13,12 +13,14 @@
 
   <PropertyGroup>
     <PackageId>CABber</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.1.0-alpha.1</Version>
     <Authors>Markus Wallén</Authors>
     <Description>A .NET wrapper around the Windows cabinet (.cab) creation/extraction APIs, built on the native FCI/FDI interfaces exported by cabinet.dll.</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/markuswallen/CABber</RepositoryUrl>
     <PackageProjectUrl>https://github.com/markuswallen/CABber</PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>Initial prerelease for early testing. API surface may change before 1.0.0.</PackageReleaseNotes>
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
   </PropertyGroup>
 
@@ -26,6 +28,10 @@
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>CABber.Tests</_Parameter1>
     </AssemblyAttribute>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../../README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
 </Project>
