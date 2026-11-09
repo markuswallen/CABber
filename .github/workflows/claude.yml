@@ -22,15 +22,15 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
-      id-token: write
       actions: read # Required for Claude to read CI results on PRs
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 1
+
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '10.0.x'
 
@@ -54,3 +54,4 @@ jobs:
             --allowed-tools
             "Bash(dotnet build*)"
             "Bash(dotnet restore*)"
+            "Bash(dotnet test*)"
