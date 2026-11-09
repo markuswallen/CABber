@@ -1,6 +1,21 @@
 # CABber
 
-A .NET wrapper around the Windows cab creator stuff
+A .NET wrapper around the Windows cabinet (`.cab`) creation and extraction
+APIs.
+
+> **Windows only.** CABber calls the native FCI/FDI APIs in `cabinet.dll`. The
+> package targets `netstandard2.0` for broad compatibility, but that does **not**
+> make it cross-platform: on Linux or macOS the calls fail at runtime.
+
+## Features
+
+- Create cabinets from individual files or whole directories.
+- List and extract the contents of existing cabinets.
+- Choose the compression type: `None`, `MsZip`, or `Lzx`.
+- Split output into multiple cabinets with a maximum cabinet size.
+- Progress reporting through `IProgress<CabinetProgress>`.
+- Interface-based API (`ICabinetBuilder`, `ICabinetExtractor`,
+  `ICabinetExtractorFactory`) that is easy to mock in tests.
 
 ## Installation
 
@@ -10,12 +25,19 @@ CABber is distributed as a NuGet package:
 dotnet add package CABber
 ```
 
+While CABber is in prerelease, add `--prerelease`.
+
 ## Requirements
 
-CABber wraps the native FCI (File Compression Interface) and FDI (File
-Decompression Interface) APIs exported by Windows' `cabinet.dll`. Those APIs
-only exist on Windows, so **CABber only runs on Windows**, regardless of
-which target framework your project uses.
+- **Windows** (any version that ships `cabinet.dll`). CABber wraps the native
+  FCI (File Compression Interface) and FDI (File Decompression Interface) APIs,
+  which only exist on Windows.
+- A project targeting `net10.0` or any runtime compatible with
+  `netstandard2.0` (.NET Framework 4.6.1+, .NET Core 2.0+, .NET 5+).
+- `CabinetBuilder` and `CabinetExtractor` are annotated with
+  `[SupportedOSPlatform("windows")]`, so the platform compatibility analyzer
+  warns when you use them from code that may run on other platforms. Guard
+  such code with `OperatingSystem.IsWindows()`.
 
 ## Building a cabinet
 
